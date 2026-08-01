@@ -17,7 +17,12 @@ MAX_BRUTE = 50_000          # ceiling on the verifier's term-by-term reference
 MAX_VERIFY_HARMONIC = 20_000  # exact HP reference used by the verifier
 MAX_VERIFY_DIGITS = 2_000   # keep the verifier's GP reference cheap
 
+MAX_VALUES = 512          # how many raw numbers a lab request may carry
+MAX_CELLS = 4096          # cells in one dimensional arrangement
+MAX_FIT_N = 10 ** 9       # ceiling for the fit -> pad -> solve -> clip pipeline
+
 FAMILY_NAMES = ("arithmetic", "geometric", "harmonic", "power")
+FIT_FAMILY_NAMES = ("arithmetic", "geometric", "harmonic")
 
 
 def geometric_digits(a, r, n):

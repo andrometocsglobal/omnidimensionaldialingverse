@@ -3,222 +3,756 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Omnidimensional · interactive</title>
+<meta name="theme-color" content="#070b20" />
+<meta name="description" content="Omnidimensional — exact O(1) closed forms for AP, GP and HP, with hypercube fit-pad-solve-clip and a sequence lab." />
+<title>Omnidimensional · interactive lab</title>
 <!-- Zero-build: React + Babel from CDN. No npm, deploy as a static file. -->
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-  :root{--bg:#0b1020;--panel:#161b2e;--panel2:#1e2740;--ink:#fff;--mut:#9aa4bf;
-        --cyan:#22d3ee;--green:#86efac;--line:#2a3556;--amber:#f59e0b;--red:#ef4444;}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
-     font-family:Calibri,Segoe UI,system-ui,Arial,sans-serif}
-  .wrap{max-width:1100px;margin:0 auto;padding:28px 20px}
-  h1{font-family:"Century Schoolbook",Cambria,serif;color:var(--cyan);margin:0 0 4px}
-  .sub{color:var(--mut);margin:0 0 20px}
-  .grid{display:grid;grid-template-columns:340px 1fr;gap:18px}
-  @media (max-width:820px){.grid{grid-template-columns:1fr}}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
-  label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
-  input,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
-     border-radius:8px;padding:9px 10px;font-size:15px}
-  button{margin-top:14px;width:100%;background:var(--cyan);color:#04121b;border:0;border-radius:10px;
-     padding:11px;font-weight:700;font-size:15px;cursor:pointer}
-  button:disabled{opacity:.55;cursor:progress}
-  .result{font-family:"Century Schoolbook",Cambria,serif;font-size:26px;color:var(--green);
-     word-break:break-all}
-  .k{color:var(--mut);font-size:13px} .mono{font-family:Consolas,monospace}
-  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
-  .feed{max-height:230px;overflow:auto;font-size:13px}
-  .feed div{padding:6px 8px;border-bottom:1px solid var(--line)}
-  .bars{display:flex;align-items:flex-end;gap:6px;height:120px;margin-top:8px}
-  .bar{flex:1;background:linear-gradient(180deg,var(--cyan),#3b82f6);border-radius:4px 4px 0 0}
-  .pill{font-size:12px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--mut)}
-  .err{background:#2a1418;border:1px solid var(--red);color:#fecaca;border-radius:10px;
-     padding:10px 12px;font-size:14px;margin-top:10px}
-  .warn{background:#2a2113;border:1px solid var(--amber);color:#fde68a;border-radius:10px;
-     padding:10px 12px;font-size:13px;margin-top:10px}
-  .row{display:flex;gap:10px;flex-wrap:wrap}
-  .row > div{flex:1;min-width:90px}
+  :root{
+    --bg:#070b20; --bg2:#050818; --card:#141d43; --card2:#1c2755; --line:rgba(140,165,255,.18);
+    --ink:#eef3ff; --sub:#a7b4de; --mut:#6f7cab;
+    --gold:#ffc857; --cyan:#6ec8e6; --green:#7cfc9e; --violet:#b48cff; --red:#f0748c;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1100px 640px at 50% -8%,#16224c,#060a1c 62%);color:var(--ink);
+    font-family:Inter,'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh}
+  button,input,select{font:inherit;color:inherit}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px 18px 64px}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:14px 0 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:12px}
+  .mark{position:relative;width:34px;height:34px;flex:0 0 34px}
+  .mark i{position:absolute;width:19px;height:19px;border:1px solid rgba(255,255,255,.4)}
+  .mark i:nth-child(1){left:0;top:13px;background:#b9c8ff;transform:scale(.72)}
+  .mark i:nth-child(2){left:7px;top:6px;background:#425ccb}
+  .mark i:nth-child(3){left:14px;top:0;background:var(--gold)}
+  .brand b{letter-spacing:.13em;font-size:.92rem;display:block}
+  .brand small{color:var(--mut);font-size:.68rem}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;padding:5px 11px;
+    border-radius:20px;border:1px solid var(--line);color:var(--sub);background:rgba(10,16,44,.6)}
+  .dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+  .apiin{background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:7px 10px;
+    font-size:12.5px;width:230px}
+
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 16px}
+  .tab{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:9px 16px;
+    cursor:pointer;color:var(--sub);font-size:13px;font-weight:700;transition:.15s}
+  .tab:hover{border-color:var(--cyan);color:var(--ink)}
+  .tab.on{color:#0d1330;background:var(--gold);border-color:var(--gold)}
+
+  .grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .stack{display:grid;gap:16px;min-width:0}
+  .card{background:linear-gradient(155deg,rgba(26,38,92,.86),rgba(12,19,52,.92));
+    border:1px solid var(--line);border-radius:var(--radius);padding:18px;min-width:0}
+  .kicker{color:var(--gold);font-size:.66rem;font-weight:800;letter-spacing:.13em;
+    text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;gap:10px}
+  label{display:block;font-size:12px;color:var(--sub);margin:12px 0 5px;font-weight:600}
+  input[type=number],input[type=text],select{width:100%;background:rgba(4,9,31,.62);
+    border:1px solid rgba(141,160,246,.26);border-radius:10px;padding:10px 11px;font-size:14.5px;outline:none}
+  input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,201,79,.1)}
+  .btn{width:100%;margin-top:14px;background:linear-gradient(135deg,#ffd66f,#f2b433);color:#11162f;
+    border:0;border-radius:11px;padding:12px;font-weight:820;font-size:14.5px;cursor:pointer}
+  .btn:disabled{opacity:.55;cursor:progress}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--sub);font-weight:700}
+  .btn.ghost:hover{border-color:var(--cyan);color:var(--ink)}
+  .row{display:flex;gap:9px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:88px}
+
+  .answer{font-size:clamp(1.5rem,3.4vw,2.5rem);line-height:1.1;color:var(--gold);
+    letter-spacing:-.03em;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+  .answer.sm{font-size:clamp(1.05rem,2.2vw,1.5rem)}
+  .mono{font-family:Consolas,'SFMono-Regular',monospace}
+  .k{color:var(--mut);font-size:12px}
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:14px}
+  .metric{background:rgba(4,9,31,.4);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+  .metric span{display:block;color:var(--mut);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+  .metric strong{font-size:.95rem;overflow-wrap:anywhere;font-weight:700}
+  .step{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:12px 14px;
+    margin-top:10px;font-family:Consolas,monospace;font-size:13.5px;line-height:1.75;overflow-x:auto}
+  .step .t{color:var(--cyan);font-weight:800;font-size:10.5px;letter-spacing:.12em;display:block;margin-bottom:4px}
+  .hl{color:var(--gold)} .c{color:var(--cyan)} .g{color:var(--green)} .v{color:var(--violet)} .m{color:var(--mut)}
+  .banner{border-radius:11px;padding:12px 14px;margin-top:12px;font-size:13px;line-height:1.55}
+  .banner.ok{border:1px solid var(--green);background:linear-gradient(180deg,#0f2c1d,#0c2016)}
+  .banner.warn{border:1px solid var(--gold);background:linear-gradient(180deg,#2f2712,#211b0d)}
+  .banner.err{border:1px solid var(--red);background:#2a1319;color:#fecdd6}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  th{position:sticky;top:0;background:#141d47;color:var(--mut);text-align:left;padding:9px 11px;
+    font-size:.62rem;letter-spacing:.09em;text-transform:uppercase;z-index:1}
+  td{padding:9px 11px;border-top:1px solid rgba(142,160,245,.11);color:#d9e0fb;font-family:Consolas,monospace}
+  tbody tr:hover{background:rgba(125,150,255,.06)}
+  .scroll{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:11px;margin-top:10px}
+  .ok{color:var(--green)} .bad{color:var(--red)}
+  canvas{width:100%;display:block;border-radius:12px;background:#04070f}
+  .legend{display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:11.5px;color:var(--sub);flex-wrap:wrap}
+  .chip{background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:6px 11px;
+    font-family:Consolas,monospace;font-size:14px;font-weight:700}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;max-height:120px;overflow:auto}
+  .tag{display:inline-block;font-family:Consolas,monospace;font-size:13px;font-weight:800;
+    padding:3px 11px;border-radius:8px;margin-right:8px}
+  .tag.arithmetic{background:rgba(255,200,87,.16);color:var(--gold);border:1px solid var(--gold)}
+  .tag.geometric{background:rgba(110,200,230,.16);color:var(--cyan);border:1px solid var(--cyan)}
+  .tag.harmonic{background:rgba(124,252,158,.16);color:var(--green);border:1px solid var(--green)}
+  .tag.unstructured{background:rgba(240,116,140,.14);color:var(--red);border:1px solid var(--red)}
+  .feed{max-height:190px;overflow:auto;font-size:12.5px;margin-top:8px}
+  .feed div{padding:6px 2px;border-bottom:1px solid var(--line)}
+  .toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:12.5px;color:var(--sub);margin-top:12px}
+  .sw{width:34px;height:18px;border-radius:10px;background:#2a3768;position:relative;transition:.15s;flex:0 0 34px}
+  .sw::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#8fa0d0;transition:.15s}
+  .toggle.on .sw{background:#2f6b48} .toggle.on .sw::after{left:18px;background:var(--green)}
+  .note{color:var(--mut);font-size:11.8px;line-height:1.55;margin-top:9px}
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);color:var(--mut);
+    font-size:12px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const {useState,useEffect,useRef,useCallback} = React;
-const DEFAULT_API = (location.hostname==="localhost"||location.hostname==="127.0.0.1")
-  ? location.protocol+"//"+location.hostname+":8000" : "";
+const {useState, useEffect, useRef, useCallback} = React;
 
-// Every response is checked: the API answers 422 with a reason for anything it
-// refuses, and rendering that reason beats a blank panel.
-async function callApi(url, options){
+const DEFAULT_API = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+  ? location.protocol + "//" + location.hostname + ":8000" : "";
+
+/* Every response is checked. The API answers 422 with a reason for anything it
+   refuses, and showing that reason beats a blank panel. */
+async function call(url, options) {
   const res = await fetch(url, options);
   let body = null;
-  try { body = await res.json(); } catch(e) { body = null; }
-  if(!res.ok){
+  try { body = await res.json(); } catch (e) { body = null; }
+  if (!res.ok) {
     const detail = body && body.detail;
     throw new Error(typeof detail === "string" ? detail
-      : detail ? JSON.stringify(detail) : `HTTP ${res.status}`);
+      : detail ? JSON.stringify(detail) : "HTTP " + res.status);
   }
   return body;
 }
+const post = (base, path, payload) => call(base + path, {
+  method: "POST", headers: {"Content-Type": "application/json"},
+  body: JSON.stringify(payload)});
 
-function App(){
-  const [api,setApi] = useState(DEFAULT_API);
-  const [family,setFamily] = useState("geometric");
-  const [n,setN] = useState(64);
-  const [a,setA] = useState(1), [d,setD] = useState(1), [r,setR] = useState(2), [p,setP] = useState(2);
-  const [res,setRes] = useState(null);
-  const [err,setErr] = useState(null);
-  const [busy,setBusy] = useState(false);
-  const [feed,setFeed] = useState([]);
-  const [status,setStatus] = useState("connecting");
-  const [spectrum,setSpectrum] = useState([]);
-  const [mid,setMid] = useState({a:2,b:3,family:"harmonic",value:null});
-  const clientId = useRef("c"+Math.floor(Math.random()*1e6));
-  const base = api || location.origin;
+const fmt = n => (n === null || n === undefined) ? "—" : Number(n).toLocaleString();
+const sig = (v, d) => (v === null || v === undefined) ? "—" : Number(v).toPrecision(d || 8);
 
-  // WebSocket sync: every compute from ANY client is broadcast here
-  useEffect(()=>{
-    if(!api && location.protocol==="file:"){ setStatus("no server"); return; }
-    const url = base.replace(/^http/,"ws") + "/ws";
-    let socket;
-    try{
-      socket = new WebSocket(url);
-      socket.onopen = ()=>setStatus("synced");
-      socket.onclose = ()=>setStatus("disconnected");
-      socket.onerror = ()=>setStatus("no server");
-      socket.onmessage = (e)=>{
-        const msg = JSON.parse(e.data);
-        if(msg.payload && msg.payload.result!==undefined){
-          setFeed(f=>[{...msg.payload,t:new Date().toLocaleTimeString()},...f].slice(0,40));
-        }
-      };
-    }catch(e){ setStatus("no server"); }
-    return ()=>{ if(socket) socket.close(); };
-  },[base,api]);
+/* ------------------------------------------------------- N-D projection ---- */
+const PLANES = [[0,3],[1,4],[2,5],[0,1],[2,3],[4,5]];
+const ANGLES = [0.7,0.5,0.9,0.35,0.6,0.45];
+const DIST = [7.5,6.4,5.4,4.6];
+function projectND(coords, spin, scale, cx, cy) {
+  const v = coords.slice();
+  while (v.length < 3) v.push(0);
+  const D = v.length;
+  for (let i = 0; i < PLANES.length; i++) {
+    const a = PLANES[i][0], b = PLANES[i][1];
+    if (a < D && b < D) {
+      const ang = ANGLES[i] * spin, ca = Math.cos(ang), sa = Math.sin(ang);
+      const x = v[a], y = v[b];
+      v[a] = x * ca - y * sa; v[b] = x * sa + y * ca;
+    }
+  }
+  for (let dim = D - 1; dim >= 3; dim--) {
+    const dd = DIST[Math.min(DIST.length - 1, D - 1 - dim)];
+    const k = dd / (dd - v[dim]);
+    for (let a = 0; a < dim; a++) v[a] *= k;
+  }
+  const k3 = 6.0 / (6.0 - v[2]);
+  return {x: cx + v[0] * scale * k3, y: cy + v[1] * scale * k3, depth: v[2], k: k3};
+}
 
-  const compute = useCallback(async ()=>{
+/** The padded hypercube: gold cells are real terms, dim cells are padding. */
+function Hypercube({n, dimension, real, height}) {
+  const ref = useRef(null);
+  const spin = useRef(0.6);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext ? canvas.getContext("2d") : null;
+    if (!ctx) return;                     // no 2d canvas here; skip the visual
+    const total = Math.pow(n, dimension);
+    const stride = total > 1600 ? Math.ceil(total / 1600) : 1;
+    const centre = (n - 1) / 2;
+    const points = [];
+    for (let i = 0; i < total; i += stride) {
+      let t = i; const co = [];
+      for (let a = 0; a < dimension; a++) { co.push(t % n - centre); t = Math.floor(t / n); }
+      points.push({co, index: i});
+    }
+    let alive = true;
+    const draw = () => {
+      if (!alive) return;
+      spin.current += 0.006;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const w = canvas.clientWidth || 520, h = height || 250;
+      if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+        canvas.width = w * dpr; canvas.height = h * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      ctx.clearRect(0, 0, w, h);
+      const scale = Math.min(92, 230 / Math.max(2, n));
+      const proj = points.map(p => projectND(p.co, spin.current, scale, w / 2, h / 2));
+      const order = proj.map((_, i) => i).sort((a, b) => proj[a].depth - proj[b].depth);
+      for (const i of order) {
+        const p = proj[i];
+        const isReal = points[i].index < real;
+        ctx.fillStyle = isReal ? "#ffc857" : "#38446f";
+        ctx.globalAlpha = (isReal ? 0.62 : 0.36) + 0.34 * Math.min(1, p.k / 1.6);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.max(1.5, 3.4 * p.k * 0.7), 0, 7);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { alive = false; };
+  }, [n, dimension, real, height]);
+  return <canvas ref={ref} style={{height: (height || 250) + "px"}} />;
+}
+
+function Err({children}) { return children ? <div className="banner err">{children}</div> : null; }
+
+function Value({data, small}) {
+  if (!data) return <div className="answer">—</div>;
+  return <div className={"answer" + (small || data.digits > 18 ? " sm" : "")}>{data.text}</div>;
+}
+
+function Describe({data}) {
+  if (!data) return null;
+  return (
+    <div className="metrics">
+      <div className="metric"><span>digits</span><strong>{fmt(data.digits)}</strong></div>
+      <div className="metric"><span>decimal</span><strong>
+        {data.decimal === null ? "overflows float" : sig(data.decimal)}</strong></div>
+      <div className="metric"><span>log10</span><strong>
+        {data.log10 === null ? "—" : Number(data.log10).toFixed(4)}</strong></div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------- Solver ------ */
+function Solver({base, clientId}) {
+  const [family, setFamily] = useState("geometric");
+  const [n, setN] = useState(64);
+  const [a, setA] = useState(1), [d, setD] = useState(1), [r, setR] = useState(2), [p, setP] = useState(2);
+  const [res, setRes] = useState(null), [err, setErr] = useState(null), [busy, setBusy] = useState(false);
+
+  const run = useCallback(async () => {
     setBusy(true); setErr(null);
-    try{
-      const body = {family,n:Number(n),a:Number(a),d:Number(d),r:Number(r),p:Number(p),
-                    client:clientId.current};
-      setRes(await callApi(base+"/api/compute",{method:"POST",
-        headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}));
-    }catch(e){ setErr(e.message); setRes(null); }
-    finally{ setBusy(false); }
-  },[base,family,n,a,d,r,p]);
-
-  useEffect(()=>{
-    callApi(base+"/api/spectrum?values=3,5,11,2")
-      .then(s=>setSpectrum(Object.entries(s).map(([k,v])=>({k,v}))))
-      .catch(()=>setSpectrum([]));
-  },[base]);
-
-  useEffect(()=>{
-    callApi(`${base}/api/midpoint?a=${mid.a}&b=${mid.b}&family=${mid.family}`)
-      .then(m=>setMid(v=>({...v,value:m.midpoint})))
-      .catch(()=>setMid(v=>({...v,value:null})));
-  },[base,mid.a,mid.b,mid.family]);
-
-  const dotColor = {synced:"#86efac",connecting:"#f59e0b",
-                    disconnected:"#ef4444","no server":"#ef4444"}[status];
-  const maxV = Math.max(1e-9,...spectrum.map(s=>s.v));
-  const num = (v,f)=> v===null||v===undefined ? "—" : (f?f(v):v);
+    try {
+      setRes(await post(base, "/api/compute", {family, n: Number(n), a: Number(a),
+        d: Number(d), r: Number(r), p: Number(p), client: clientId}));
+    } catch (e) { setErr(e.message); setRes(null); }
+    finally { setBusy(false); }
+  }, [base, family, n, a, d, r, p, clientId]);
+  useEffect(() => { run().catch(() => {}); }, []);
 
   return (
-   <div className="wrap">
-    <h1>Omnidimensional</h1>
-    <p className="sub">Interactive O(1) explorer — four families, exact closed forms, live server/client sync.</p>
-    <div style={{marginBottom:12}}>
-      <span className="pill"><span className="dot" style={{background:dotColor}}></span>{status}</span>{" "}
-      <input style={{display:"inline-block",width:280,marginLeft:8}} value={api}
-        onChange={e=>setApi(e.target.value)} placeholder="API base e.g. http://localhost:8000"/>
-    </div>
     <div className="grid">
       <div className="card">
+        <div className="kicker">01 / the four families</div>
         <label>Family</label>
-        <select value={family} onChange={e=>setFamily(e.target.value)}>
+        <select value={family} onChange={e => setFamily(e.target.value)}>
           <option value="arithmetic">arithmetic (AP)</option>
           <option value="geometric">geometric (GP)</option>
           <option value="harmonic">harmonic (HP)</option>
           <option value="power">power sum (k^p)</option>
         </select>
         <label>n (terms)</label>
-        <input type="number" value={n} onChange={e=>setN(e.target.value)}/>
-        {family==="arithmetic" && <><label>a</label><input type="number" value={a} onChange={e=>setA(e.target.value)}/>
-          <label>d</label><input type="number" value={d} onChange={e=>setD(e.target.value)}/></>}
-        {family==="geometric" && <><label>a</label><input type="number" value={a} onChange={e=>setA(e.target.value)}/>
-          <label>r</label><input type="number" value={r} onChange={e=>setR(e.target.value)}/></>}
-        {family==="harmonic" && <><label>a</label><input type="number" value={a} onChange={e=>setA(e.target.value)}/>
-          <label>d</label><input type="number" value={d} onChange={e=>setD(e.target.value)}/></>}
-        {family==="power" && <><label>p (power)</label><input type="number" value={p} onChange={e=>setP(e.target.value)}/></>}
-        <button onClick={compute} disabled={busy}>{busy?"computing…":"Compute (O(1))"}</button>
-        {err && <div className="err">{err}</div>}
+        <input type="number" value={n} onChange={e => setN(e.target.value)} />
+        {(family === "arithmetic" || family === "harmonic") && <>
+          <label>a (first term)</label>
+          <input type="number" value={a} onChange={e => setA(e.target.value)} />
+          <label>d (common difference)</label>
+          <input type="number" value={d} onChange={e => setD(e.target.value)} /></>}
+        {family === "geometric" && <>
+          <label>a (first term)</label>
+          <input type="number" value={a} onChange={e => setA(e.target.value)} />
+          <label>r (ratio)</label>
+          <input type="number" value={r} onChange={e => setR(e.target.value)} /></>}
+        {family === "power" && <>
+          <label>p (power)</label>
+          <input type="number" value={p} onChange={e => setP(e.target.value)} /></>}
+        <button className="btn" onClick={run} disabled={busy}>
+          {busy ? "computing…" : "Compute (O(1))"}</button>
+        <Err>{err}</Err>
       </div>
 
-      <div style={{display:"grid",gap:18}}>
+      <div className="stack">
         <div className="card">
-          <div className="k">Result {res && <span className="pill" style={{marginLeft:8}}>
-            {res.exact_match ? "cross-checked ✓" : "MISMATCH"}</span>}</div>
-          <div className="result">{res ? res.result : "—"}</div>
+          <div className="kicker"><span>02 / result</span>
+            {res && <span className={res.exact_match ? "ok" : "bad"}>
+              {res.exact_match ? "cross-checked ✓" : "MISMATCH"}</span>}</div>
+          <Value data={res ? {text: res.result, digits: res.digits} : null} />
           {res && <>
-            <div className="row" style={{marginTop:10}}>
-              <div><div className="k">digits</div><div className="mono">{res.digits.toLocaleString()}</div></div>
-              <div><div className="k">decimal</div><div className="mono">
-                {res.decimal===null ? "overflows float" : num(res.decimal,v=>v.toPrecision(8))}</div></div>
-              <div><div className="k">log10</div><div className="mono">{num(res.log10,v=>v.toFixed(3))}</div></div>
-            </div>
-            <div className="k mono" style={{marginTop:8}}>closed form: {res.closed_form}</div>
-            {res.truncated && <div className="warn">The exact value has {res.digits.toLocaleString()} digits —
+            <Describe data={{digits: res.digits, decimal: res.decimal, log10: res.log10}} />
+            <div className="step"><span className="t">CLOSED FORM</span>{res.closed_form}</div>
+            {res.truncated && <div className="banner warn">The exact value has {fmt(res.digits)} digits —
               shown in scientific notation. The computation itself was not rounded.</div>}
-            {res.approximate && <div className="warn">Harmonic sums have no elementary closed form; past the
-              exact cap this is the O(1) digamma approximation.</div>}
-            {res.spot_checked && <div className="k" style={{marginTop:8}}>
-              Cross-checked term-by-term at n = {res.verified_n.toLocaleString()} of {res.n.toLocaleString()}.</div>}
+            {res.approximate && <div className="banner warn">Harmonic sums have no elementary closed
+              form; past the exact cap this is the O(1) digamma approximation.</div>}
+            {res.spot_checked && <div className="note">Cross-checked term-by-term at
+              n = {fmt(res.verified_n)} of {fmt(res.n)} — summing the full request would
+              defeat the point of a closed form.</div>}
           </>}
-        </div>
-
-        <div className="card">
-          <div className="k">Power-mean spectrum M_p of [3,5,11,2]</div>
-          <div className="bars">
-            {spectrum.map(s=>(<div key={s.k} className="bar"
-              style={{height:(10+90*s.v/maxV)+"%"}} title={`p=${s.k}: ${s.v.toFixed(3)}`}></div>))}
-          </div>
-          <div className="k" style={{marginTop:6}}>p = {spectrum.map(s=>s.k).join(", ")} (min → max)</div>
-          <div className="row" style={{marginTop:14,alignItems:"flex-end"}}>
-            <div><label>midpoint a</label>
-              <input type="number" value={mid.a} onChange={e=>setMid(v=>({...v,a:e.target.value}))}/></div>
-            <div><label>midpoint b</label>
-              <input type="number" value={mid.b} onChange={e=>setMid(v=>({...v,b:e.target.value}))}/></div>
-            <div><label>family</label>
-              <select value={mid.family} onChange={e=>setMid(v=>({...v,family:e.target.value}))}>
-                <option>harmonic</option><option>arithmetic</option>
-                <option>geometric</option><option>quadratic</option>
-              </select></div>
-            <div><div className="k">midpoint</div>
-              <div className="mono" style={{color:"var(--green)",fontSize:18}}>
-                {num(mid.value,v=>v.toPrecision(8))}</div></div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="k">Live sync feed — computations from every connected client</div>
-          <div className="feed">
-            {feed.length===0 && <div className="k">waiting for computations…</div>}
-            {feed.map((f,i)=>(
-              <div key={i}><span className="mono">{f.t}</span> · <b>{f.family}</b> n={f.n}
-                {" → "}<span style={{color:"var(--green)"}}>{String(f.result).slice(0,40)}</span>
-                <span className="k"> · {f.client}</span></div>
-            ))}
-          </div>
         </div>
       </div>
     </div>
-   </div>
   );
 }
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+
+/* ------------------------------------------------------------- Omni-Fit ---- */
+function OmniFit({base, clientId}) {
+  const [family, setFamily] = useState("arithmetic");
+  const [N, setN] = useState(50), [dimension, setDim] = useState(3);
+  const [F, setF] = useState(7), [h, setH] = useState(2), [r, setR] = useState(3), [p, setP] = useState(3);
+  const [res, setRes] = useState(null), [err, setErr] = useState(null), [busy, setBusy] = useState(false);
+
+  const run = useCallback(async () => {
+    setBusy(true); setErr(null);
+    try {
+      setRes(await post(base, "/api/omnifit", {family, N: Number(N),
+        dimension: Number(dimension), F: Number(F), h: Number(h), r: Number(r),
+        p: Number(p), client: clientId}));
+    } catch (e) { setErr(e.message); setRes(null); }
+    finally { setBusy(false); }
+  }, [base, family, N, dimension, F, h, r, p, clientId]);
+  useEffect(() => { run().catch(() => {}); }, []);
+
+  const shape = res ? res.shape : null;
+  const clip = res && res.operation === "divide" ? "÷" : "−";
+
+  return (
+    <div className="grid">
+      <div className="card">
+        <div className="kicker">01 / fit → pad → solve → clip</div>
+        <label>Family</label>
+        <select value={family} onChange={e => setFamily(e.target.value)}>
+          <option value="arithmetic">arithmetic · Σ kᵖ</option>
+          <option value="geometric">geometric · Π kʷ</option>
+          <option value="harmonic">harmonic · Σ 1/kᵖ</option>
+        </select>
+        <label>N (your count)</label>
+        <input type="number" value={N} onChange={e => setN(e.target.value)} />
+        <label>dimension d</label>
+        <input type="number" min="1" max="8" value={dimension} onChange={e => setDim(e.target.value)} />
+        <div className="row">
+          <div><label>first term F</label>
+            <input type="number" value={F} onChange={e => setF(e.target.value)} /></div>
+          {family === "geometric"
+            ? <div><label>ratio r</label>
+                <input type="number" value={r} onChange={e => setR(e.target.value)} /></div>
+            : <div><label>step h</label>
+                <input type="number" value={h} onChange={e => setH(e.target.value)} /></div>}
+        </div>
+        <label>power p</label>
+        <input type="number" value={p} onChange={e => setP(e.target.value)} />
+        <button className="btn" onClick={run} disabled={busy}>
+          {busy ? "solving…" : "Fit & solve (O(1))"}</button>
+        {res && res.best_dimension && <button className="btn ghost"
+          onClick={() => setDim(res.best_dimension.dimension)}>
+          Auto-fit → d = {res.best_dimension.dimension} (pad {fmt(res.best_dimension.pad)})</button>}
+        <Err>{err}</Err>
+      </div>
+
+      <div className="stack">
+        {shape && <div className="card">
+          <div className="kicker"><span>02 / the perfect shape</span>
+            <span className="mono m">{fmt(res.N)} real + {fmt(shape.pad)} pad = {shape.n}^{shape.dimension} = {fmt(shape.total)}</span></div>
+          <Hypercube n={shape.n} dimension={shape.dimension} real={res.N} height={240} />
+          <div className="legend">
+            <span><span className="dot" style={{background:"#ffc857",display:"inline-block",marginRight:6}}></span>your terms (N = {fmt(res.N)})</span>
+            <span><span className="dot" style={{background:"#38446f",display:"inline-block",marginRight:6}}></span>synthetic padding (clipped away)</span>
+          </div>
+        </div>}
+
+        {res && <div className="card">
+          <div className="kicker">03 / the pipeline</div>
+          <div className="step"><span className="t">STEP A — SOLVE THE FULL SHAPE, O(1)</span>
+            over {fmt(shape.total)} cells = <span className="c">{res.full.text}</span></div>
+          <div className="step"><span className="t">STEP B — SOLVE THE PADDING, O(1)</span>
+            {shape.pad > 0
+              ? <>over q = {fmt(shape.pad)} synthetic terms = <span className="v">{res.pad.text}</span></>
+              : <span className="m">no padding — N is already a perfect {shape.n}^{shape.dimension}</span>}</div>
+          <div className="step"><span className="t">STEP C — CLIP</span>
+            answer = full {clip} pad = <span className="hl">{res.answer.text}</span></div>
+          <Value data={res.answer} />
+          <Describe data={res.answer} />
+          {res.exact_match === true && <div className="banner ok">
+            Matches the direct term-by-term result exactly — {fmt(res.formula_operations)} formula
+            operations against {fmt(res.direct_operations)} direct ones.</div>}
+          {res.exact_match === false && <div className="banner err">
+            Does not match the direct sum — {res.direct ? res.direct.text : ""}</div>}
+          {res.approximate && <div className="banner warn">
+            Harmonic runs have no exact closed form. This is the O(1) midpoint series
+            {res.relative_error !== undefined
+              ? <> — relative error {Number(res.relative_error).toExponential(2)} against the exact sum.</>
+              : <> (too large to check directly here).</>}
+            <div className="note">The series sharpens as the run moves away from zero; a run starting
+            near 1 is its worst case.</div></div>}
+          {!res.checked_directly && !res.approximate && <div className="note">
+            N = {fmt(res.N)} is far too large to brute-force for comparison — but the closed form
+            answered instantly anyway. That is the whole claim.</div>}
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------- Explorer ---- */
+const PRESETS = ["2 x 2", "3 x 3", "2 x 3 x 2", "2 x 2 x 2 x 2"];
+
+function Explorer({base}) {
+  const [shape, setShape] = useState("2 x 3 x 2");
+  const [family, setFamily] = useState("arithmetic");
+  const [start, setStart] = useState(7), [step, setStep] = useState(1), [power, setPower] = useState(3);
+  const [res, setRes] = useState(null), [err, setErr] = useState(null);
+
+  const run = useCallback(async () => {
+    setErr(null);
+    try {
+      const q = new URLSearchParams({shape, family, start, step, power, max_terms: 256});
+      setRes(await call(base + "/api/explore?" + q.toString()));
+    } catch (e) { setErr(e.message); setRes(null); }
+  }, [base, shape, family, start, step, power]);
+  useEffect(() => { run().catch(() => {}); }, [shape, family, start, step, power]);
+
+  return (
+    <div className="grid">
+      <div className="card">
+        <div className="kicker">01 / define the arrangement</div>
+        <label>Family</label>
+        <select value={family} onChange={e => setFamily(e.target.value)}>
+          <option value="arithmetic">arithmetic · add</option>
+          <option value="geometric">geometric · multiply</option>
+          <option value="harmonic">harmonic · reciprocal</option>
+        </select>
+        <label>Dimensional arrangement</label>
+        <input type="text" value={shape} onChange={e => setShape(e.target.value)} />
+        <div className="row" style={{marginTop:9}}>
+          {PRESETS.map(preset => (
+            <button key={preset} className="btn ghost" style={{marginTop:0,padding:"7px 4px",fontSize:12}}
+              onClick={() => setShape(preset)}>{preset}</button>))}
+        </div>
+        <div className="row">
+          <div><label>start</label>
+            <input type="number" value={start} onChange={e => setStart(e.target.value)} /></div>
+          <div><label>{family === "geometric" ? "ratio" : "spacing"}</label>
+            <input type="number" value={step} onChange={e => setStep(e.target.value)} /></div>
+        </div>
+        <label>power p = {power}</label>
+        <input type="range" min="0" max="10" value={power}
+          onChange={e => setPower(e.target.value)} style={{width:"100%"}} />
+        <Err>{err}</Err>
+      </div>
+
+      <div className="stack">
+        {res && <div className="card">
+          <div className="kicker"><span>02 / final computation</span>
+            <span className="mono m">{res.label}</span></div>
+          <Value data={res.value} />
+          <Describe data={res.value} />
+          <div className="metrics">
+            <div className="metric"><span>cells X</span><strong>{fmt(res.count)}</strong></div>
+            <div className="metric"><span>midpoint M</span><strong>{res.midpoint || "—"}</strong></div>
+            <div className="metric"><span>last term</span><strong>{res.last}</strong></div>
+            <div className="metric"><span>dimensions</span><strong>{res.dimensions}-D</strong></div>
+          </div>
+        </div>}
+
+        {res && <div className="card">
+          <div className="kicker"><span>03 / inspect every cell</span>
+            <span className="m">{res.terms_truncated
+              ? "first " + fmt(res.terms.length) + " of " + fmt(res.count)
+              : "all " + fmt(res.count) + " cells"}</span></div>
+          <div className="scroll">
+            <table>
+              <thead><tr><th>#</th><th>coordinate</th><th>base term</th><th>contribution</th></tr></thead>
+              <tbody>{res.terms.map(t => (
+                <tr key={t.index}><td>{t.index}</td><td>[{t.coordinate.join(", ")}]</td>
+                  <td>{t.base}</td><td className="hl">{t.contribution}</td></tr>))}</tbody>
+            </table>
+          </div>
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ Lab ---- */
+function randomInt(lo, hi) { return lo + Math.floor(Math.random() * (hi - lo + 1)); }
+const HP_LIBRARY = [[60,30,20,15,12,10],[120,60,40,30,24,20],[420,210,140,105,84,70],[840,420,280,210,168,140]];
+
+function generate(kind) {
+  if (kind === "wild") {
+    const out = []; const count = randomInt(5, 9);
+    for (let i = 0; i < count; i++) out.push(randomInt(-400, 900));
+    return out;
+  }
+  if (kind === "blocks") {
+    const out = [];
+    let F = randomInt(2, 14), h = randomInt(2, 6);
+    for (let i = 0; i < 4; i++) out.push(F + i * h);
+    let a = randomInt(2, 5), r = randomInt(2, 3);
+    for (let i = 0; i < 4; i++) out.push(a * Math.pow(r, i));
+    F = randomInt(45, 74); h = randomInt(3, 8);
+    for (let i = 0; i < 4; i++) out.push(F + i * h);
+    return out;
+  }
+  const pick = randomInt(0, 3);
+  if (pick === 0) {                       // plain AP
+    const F = randomInt(2, 20), h = randomInt(1, 6), out = [];
+    for (let i = 0; i < randomInt(5, 7); i++) out.push(F + i * h);
+    return out;
+  }
+  if (pick === 1) {                       // hybrid AP (polynomial)
+    const F = randomInt(1, 8), d1 = randomInt(1, 3), d2 = randomInt(1, 3), out = [];
+    for (let i = 0; i < randomInt(6, 7); i++) out.push(F + d1 * i + d2 * (i * (i - 1) / 2));
+    return out;
+  }
+  if (pick === 2) {                       // GP
+    const a = randomInt(2, 6), r = randomInt(2, 3), out = [];
+    for (let i = 0; i < randomInt(4, 6); i++) out.push(a * Math.pow(r, i));
+    return out;
+  }
+  const seq = HP_LIBRARY[randomInt(0, HP_LIBRARY.length - 1)];
+  return seq.slice(0, randomInt(4, seq.length));
+}
+
+function Lab({base}) {
+  const [values, setValues] = useState([1, 3, 7, 14, 25]);
+  const [raw, setRaw] = useState("1, 3, 7, 14, 25");
+  const [named, setNamed] = useState(null);
+  const [rev, setRev] = useState(null);
+  const [asm, setAsm] = useState(null);
+  const [blocks, setBlocks] = useState(1);
+  const [sortFirst, setSortFirst] = useState(false);
+  const [err, setErr] = useState(null);
+
+  const analyse = useCallback(async (nums, blockCount, sorted) => {
+    setErr(null);
+    try {
+      const classify = await post(base, "/api/lab/classify", {values: nums});
+      setNamed(classify);
+    } catch (e) { setNamed(null); setErr(e.message); }
+    try { setRev(await post(base, "/api/lab/reverse", {values: nums})); }
+    catch (e) { setRev(null); }
+    try {
+      setAsm(await post(base, "/api/lab/assemble",
+        {values: nums, blocks: blockCount, sort_first: sorted}));
+    } catch (e) { setAsm(null); }
+  }, [base]);
+
+  useEffect(() => { analyse(values, blocks, sortFirst).catch(() => {}); },
+    [values, blocks, sortFirst]);
+
+  const load = kind => {
+    const nums = generate(kind);
+    setValues(nums); setRaw(nums.join(", ")); setBlocks(kind === "blocks" ? 3 : 1);
+  };
+  const read = () => {
+    const nums = (raw.match(/-?\d+(\.\d+)?/g) || []).map(Number).filter(Number.isFinite);
+    if (nums.length < 3) { setErr("enter at least 3 numbers, comma or space separated"); return; }
+    setValues(nums); setBlocks(1);
+  };
+  const maxBlocks = Math.max(1, Math.floor(values.length / 2));
+
+  return (
+    <div className="stack">
+      <div className="card">
+        <div className="kicker">01 / throw in any numbers — the engine names them</div>
+        <div className="row">
+          <button className="btn" style={{marginTop:0}} onClick={() => load("mystery")}>🎲 Mystery</button>
+          <button className="btn ghost" style={{marginTop:0}} onClick={() => load("wild")}>🌪 Extreme random</button>
+          <button className="btn ghost" style={{marginTop:0}} onClick={() => load("blocks")}>🧩 Piecewise blocks</button>
+        </div>
+        <label>…or paste your own</label>
+        <div className="row">
+          <input type="text" value={raw} onChange={e => setRaw(e.target.value)}
+            style={{flex:3,minWidth:200}} placeholder="3 6 12 24, or -40 7 900 -3 55" />
+          <button className="btn" style={{marginTop:0,flex:1}} onClick={read}>Read these</button>
+        </div>
+        <div className="chips">{values.map((v, i) => <span key={i} className="chip">{v}</span>)}</div>
+        <Err>{err}</Err>
+      </div>
+
+      {named && <div className="card">
+        <div className="kicker"><span>02 / what these numbers are</span>
+          <span className="m">{named.terms} terms</span></div>
+        <div className={"banner " + (named.structured ? "ok" : "warn")}>
+          <span className={"tag " + named.family}>{named.kind === "hybrid" ? "HYBRID " : ""}
+            {named.family.toUpperCase()}</span>
+          depth {named.depth} · {named.reason}
+        </div>
+        <div className="step">
+          {named.ladder.levels.map(level => (
+            <div key={level.level}>
+              <span className={level.level === 0 ? "hl" : "c"}>{level.label}</span>:{" "}
+              {level.values.join(",  ")}{level.truncated ? " …" : ""}
+            </div>))}
+        </div>
+        <div className="step"><span className="t">{named.label.toUpperCase()} — CLOSED FORM, O(1)</span>
+          <span className="hl">{named.closed.text}</span>
+          <div className="m">direct term-by-term = {named.direct.text} · {" "}
+            {named.match ? <span className="ok">exact match ✓</span> : <span className="bad">mismatch</span>}
+            {" "}· ~{named.operations} operations vs {named.terms} direct</div></div>
+        {!named.structured && <div className="note">
+          No ladder flattened early, so there is no structure to exploit. The aggregate above is still
+          exact — it is just honest O(N) work wearing a closed form's clothes, and the predicted next
+          term ({named.next_term.text}) is extrapolation, not insight.</div>}
+      </div>}
+
+      {rev && <div className="card">
+        <div className="kicker"><span>03 / reverse-engineer the closest law</span>
+          <span className="m">ranked by adjusted R²</span></div>
+        <div className="scroll" style={{maxHeight:200}}>
+          <table>
+            <thead><tr><th>candidate law</th><th>R²</th><th>adjusted</th><th>fit</th></tr></thead>
+            <tbody>{rev.models.map((m, i) => (
+              <tr key={m.name}>
+                <td className={i === 0 ? "hl" : ""}>{i === 0 ? "▸ " : ""}{m.name}</td>
+                <td>{m.r2.toFixed(4)}</td><td>{m.adjusted_r2.toFixed(4)}</td>
+                <td className={m.r2 > 0.99 ? "ok" : (m.r2 > 0.6 ? "" : "bad")}>
+                  {m.r2 > 0.9999 ? "exact" : m.r2 > 0.99 ? "excellent"
+                    : m.r2 > 0.9 ? "good" : m.r2 > 0.6 ? "weak" : "poor"}</td>
+              </tr>))}</tbody>
+          </table>
+        </div>
+        <div className="step"><span className="t">BEST FIT — {rev.best.name} · R² = {rev.best.r2.toFixed(4)}</span>
+          {rev.best.formula}
+          <div className="m">residual RMS {rev.residual_rms.toPrecision(3)}
+            {" "}({(rev.relative_residual * 100).toFixed(1)}% of signal) · next ≈ {" "}
+            {rev.best.next === null ? "—" : Number(rev.best.next).toPrecision(6)}</div></div>
+      </div>}
+
+      {asm && <div className="card">
+        <div className="kicker"><span>04 / split → solve each block → recombine</span>
+          <span className="m">{asm.operations} ops vs {asm.direct_operations} direct</span></div>
+        <div className="row" style={{alignItems:"center"}}>
+          <div className={"toggle" + (sortFirst ? " on" : "")} onClick={() => setSortFirst(!sortFirst)}>
+            <span className="sw"></span> sort first</div>
+          <div><label style={{marginTop:0}}>blocks: {blocks}</label>
+            <input type="range" min="1" max={maxBlocks} value={Math.min(blocks, maxBlocks)}
+              onChange={e => setBlocks(Number(e.target.value))} style={{width:"100%"}} /></div>
+        </div>
+        <div className="scroll" style={{maxHeight:220}}>
+          <table>
+            <thead><tr><th>block</th><th>range</th><th>law</th><th>how</th><th>Σ</th></tr></thead>
+            <tbody>{asm.blocks.map(b => (
+              <tr key={b.block}><td>#{b.block}</td><td>{b.low} … {b.high}</td>
+                <td className="c">{b.law}</td><td className="m">{b.note}</td>
+                <td className="hl">{b.sum.text}</td></tr>))}</tbody>
+          </table>
+        </div>
+        <div className={"banner " + (asm.match ? "ok" : "err")}>
+          Σ assembled = {asm.total.text} {asm.match ? "✓" : "✗"}
+          <div className="note" style={{marginTop:4}}>
+            {asm.match ? "recombined blocks equal the direct total (" + asm.direct.text + ")"
+              : "does not match the direct total " + asm.direct.text}
+            {asm.all_constant_time ? " · every block solved in O(1)"
+              : " · some blocks had no structure and were summed directly"}</div>
+        </div>
+      </div>}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ App ---- */
+const TABS = [
+  {key: "solver", label: "∑ Solver"},
+  {key: "omnifit", label: "⬡ Omni-Fit"},
+  {key: "explorer", label: "▦ Explorer"},
+  {key: "lab", label: "🎲 Sequence Lab"},
+];
+
+function App() {
+  const [api, setApi] = useState(DEFAULT_API);
+  const [tab, setTab] = useState("solver");
+  const [status, setStatus] = useState("connecting");
+  const [feed, setFeed] = useState([]);
+  const [health, setHealth] = useState(null);
+  const clientId = useRef("c" + Math.floor(Math.random() * 1e6));
+  const base = api || location.origin;
+
+  useEffect(() => {
+    if (!api && location.protocol === "file:") { setStatus("no server"); return; }
+    let socket;
+    try {
+      socket = new WebSocket(base.replace(/^http/, "ws") + "/ws");
+      socket.onopen = () => setStatus("synced");
+      socket.onclose = () => setStatus("disconnected");
+      socket.onerror = () => setStatus("no server");
+      socket.onmessage = e => {
+        const msg = JSON.parse(e.data);
+        if (msg.payload && msg.payload.result !== undefined) {
+          setFeed(f => [{...msg.payload, at: new Date().toLocaleTimeString()}, ...f].slice(0, 40));
+        }
+      };
+    } catch (e) { setStatus("no server"); }
+    return () => { if (socket) socket.close(); };
+  }, [base, api]);
+
+  useEffect(() => {
+    call(base + "/api/health").then(setHealth).catch(() => setHealth(null));
+  }, [base]);
+
+  const colour = {synced: "#7cfc9e", connecting: "#ffc857",
+    disconnected: "#f0748c", "no server": "#f0748c"}[status];
+
+  return (
+    <div className="wrap">
+      <div className="topbar">
+        <div className="brand">
+          <span className="mark"><i></i><i></i><i></i></span>
+          <span><b>OMNIDIMENSIONAL</b>
+            <small>exact O(1) closed forms · AP · GP · HP{health ? " · v" + health.version : ""}</small></span>
+        </div>
+        <div className="row" style={{flex:"0 0 auto",alignItems:"center"}}>
+          <span className="pill"><span className="dot" style={{background: colour}}></span>{status}</span>
+          <input className="apiin" value={api} onChange={e => setApi(e.target.value)}
+            placeholder="API base e.g. http://localhost:8000" />
+        </div>
+      </div>
+
+      <div className="tabs">
+        {TABS.map(t => (
+          <button key={t.key} className={"tab" + (tab === t.key ? " on" : "")}
+            onClick={() => setTab(t.key)}>{t.label}</button>))}
+      </div>
+
+      {tab === "solver" && <Solver base={base} clientId={clientId.current} />}
+      {tab === "omnifit" && <OmniFit base={base} clientId={clientId.current} />}
+      {tab === "explorer" && <Explorer base={base} />}
+      {tab === "lab" && <Lab base={base} />}
+
+      <div className="card" style={{marginTop:16}}>
+        <div className="kicker"><span>live sync — every computation from every connected client</span>
+          <span className="m">{health ? health.clients + " connected" : ""}</span></div>
+        <div className="feed">
+          {feed.length === 0 && <div className="k">waiting for computations…</div>}
+          {feed.map((f, i) => (
+            <div key={i}>
+              <span className="mono m">{f.at}</span> · <b>{f.kind === "omnifit" ? "omni-fit" : "solve"}</b>
+              {" "}<span className="c">{f.family}</span> n={fmt(f.n)}
+              {f.shape ? <span className="m"> · {f.shape}</span> : null}
+              {" → "}<span className="g mono">{String(f.result).slice(0, 44)}</span>
+              <span className="m"> · {f.client}</span>
+            </div>))}
+        </div>
+      </div>
+
+      <footer>
+        <span>OMNIDIMENSIONAL · exact rational arithmetic, bounded rendering, machine-verified</span>
+        <span>MIT · Kumaran Kanniappan</span>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>

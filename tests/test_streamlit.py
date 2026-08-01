@@ -23,9 +23,16 @@ def test_app_runs_without_raising(app):
     assert not app.error, [e.value for e in app.error]
 
 
-def test_all_five_tabs_render(app):
-    assert len(app.tabs) == 5
+def test_every_tab_renders(app):
+    assert len(app.tabs) == 7
     assert app.title[0].value == "Omnidimensional"
+
+
+def test_omnifit_and_lab_tabs_produce_results(app):
+    """The fit pipeline and the sequence lab must actually run in the app."""
+    blocks = [c.value for c in app.code]
+    assert any("full shape" in b and "answer = full" in b for b in blocks)
+    assert any("difference 1" in b for b in blocks)   # the lab's ladder
 
 
 def test_default_view_shows_an_exact_result(app):
@@ -36,9 +43,10 @@ def test_default_view_shows_an_exact_result(app):
 
 def test_speed_table_columns_stay_numeric(app):
     """Mixing floats with a placeholder string used to break Arrow encoding."""
-    frames = app.dataframe
-    assert frames, "expected the O(1) vs O(n) table to render"
-    speed = frames[0].value
+    # Several tabs render tables now, so pick the one by its columns.
+    speed = next((f.value for f in app.dataframe
+                  if "closed_form_s" in getattr(f.value, "columns", [])), None)
+    assert speed is not None, "expected the O(1) vs O(n) table to render"
     for column in ("closed_form_s", "brute_force_s"):
         series = speed[column].dropna()
         assert all(isinstance(v, float) for v in series), column

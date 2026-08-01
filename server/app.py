@@ -25,10 +25,15 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from omnidimensional import (  # noqa: E402
-    Arithmetic, Geometric, Harmonic, FAMILY_NAMES, MAX_N, MAX_POWER,
-    power_mean_spectrum, omnidimensional_midpoint, verify, __version__,
+    Arithmetic, Geometric, Harmonic, FAMILY_NAMES, FIT_FAMILY_NAMES,
+    MAX_N, MAX_POWER, power_mean_spectrum, omnidimensional_midpoint, verify,
+    __version__,
 )
-from omnidimensional.engine import POWER_FORM, ComputeError, compute  # noqa: E402
+from omnidimensional.engine import (  # noqa: E402
+    POWER_FORM, ComputeError, assemble_runs, compute, explore, ladder_view,
+    name_run, omnifit, reverse,
+)
+from omnidimensional.limits import MAX_FIT_N, MAX_VALUES  # noqa: E402
 
 app = FastAPI(title="omnidimensional", version=__version__)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
@@ -43,6 +48,30 @@ class ComputeRequest(BaseModel):
     r: float = 2.0
     p: int = Field(default=2, ge=0, le=MAX_POWER)
     client: str = "anon"
+
+
+class FitRequest(BaseModel):
+    """fit -> pad -> solve -> clip over an arbitrary count."""
+
+    family: str = "arithmetic"          # arithmetic | geometric | harmonic
+    N: int = Field(default=50, ge=0, le=MAX_FIT_N)
+    dimension: int = Field(default=3, ge=1, le=8)
+    F: float = 1.0
+    h: float = 1.0
+    r: float = 2.0
+    p: int = Field(default=1, ge=0, le=64)
+    order: int = Field(default=3, ge=0, le=6)
+    client: str = "anon"
+
+
+class ValuesRequest(BaseModel):
+    values: List[float] = Field(default_factory=list, max_length=MAX_VALUES)
+    client: str = "anon"
+
+
+class AssembleRequest(ValuesRequest):
+    blocks: int = Field(default=1, ge=1, le=MAX_VALUES)
+    sort_first: bool = False
 
 
 class Hub:
@@ -132,8 +161,76 @@ async def compute_endpoint(req: ComputeRequest):
     except (ZeroDivisionError, OverflowError) as exc:
         raise HTTPException(422, "%s: %s" % (type(exc).__name__, exc))
     out["client"] = req.client
+    out["kind"] = "compute"
     await hub.broadcast(out)     # push to every synced client
     return out
+
+
+@app.post("/api/omnifit")
+async def omnifit_endpoint(req: FitRequest):
+    """Fit N terms onto a perfect hypercube, solve it, clip the padding."""
+    try:
+        out = omnifit(req.family, req.N, req.dimension, F=req.F, h=req.h,
+                      r=req.r, p=req.p, order=req.order)
+    except ComputeError as exc:
+        raise HTTPException(422, str(exc))
+    except (ZeroDivisionError, OverflowError) as exc:
+        raise HTTPException(422, "%s: %s" % (type(exc).__name__, exc))
+    out["client"] = req.client
+    await hub.broadcast({
+        "kind": "omnifit", "family": out["family"], "n": out["N"],
+        "result": out["answer"]["text"], "client": req.client,
+        "exact_match": out.get("exact_match"),
+        "shape": "%d^%d" % (out["shape"]["n"], out["shape"]["dimension"]),
+    })
+    return out
+
+
+@app.get("/api/fit-families")
+def fit_families():
+    return {"families": list(FIT_FAMILY_NAMES), "max_n": MAX_FIT_N,
+            "max_values": MAX_VALUES}
+
+
+@app.post("/api/lab/classify")
+def classify_endpoint(req: ValuesRequest):
+    """Name an arbitrary run from its difference ladder, then aggregate it."""
+    try:
+        summary = name_run(req.values)
+        summary["ladder"] = ladder_view(req.values)
+    except ComputeError as exc:
+        raise HTTPException(422, str(exc))
+    return summary
+
+
+@app.post("/api/lab/reverse")
+def reverse_endpoint(req: ValuesRequest):
+    """Rank candidate AP / GP / HP / hybrid laws for noisy data."""
+    try:
+        return reverse(req.values)
+    except ComputeError as exc:
+        raise HTTPException(422, str(exc))
+
+
+@app.post("/api/lab/assemble")
+def assemble_endpoint(req: AssembleRequest):
+    """Split into blocks, solve each with its own law, recombine."""
+    try:
+        return assemble_runs(req.values, req.blocks, req.sort_first)
+    except ComputeError as exc:
+        raise HTTPException(422, str(exc))
+
+
+@app.get("/api/explore")
+def explore_endpoint(shape: str = "2 x 2", family: str = "arithmetic",
+                     start: float = 7.0, step: float = 1.0, power: int = 3,
+                     max_terms: int = 256):
+    """Lay a run over a dimensional arrangement and inspect every cell."""
+    try:
+        return explore(shape, family, start, step, power,
+                       max_terms=max(1, min(int(max_terms), 1024)))
+    except ComputeError as exc:
+        raise HTTPException(422, str(exc))
 
 
 @app.websocket("/ws")

@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "omnidimensional"
-version = "0.1.0"
-description = "Exact, constant-time closed forms for the four progression families (AP/GP/HP/OmniFit), the generalized power mean, a harmonic midpoint, and an exact verifier."
+version = "0.2.0"
+description = "Exact, constant-time closed forms for the four progression families (AP/GP/HP/OmniFit): midpoint power sums, hypercube fit-pad-solve-clip, difference-ladder run classification, and an exact verifier."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Kumaran Kanniappan" }]
-keywords = ["mathematics", "progressions", "power-mean", "faulhaber", "closed-form", "O(1)"]
+keywords = ["mathematics", "progressions", "power-mean", "faulhaber", "bernoulli",
+            "central-moments", "hypercube", "closed-form", "O(1)", "exact-arithmetic"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",

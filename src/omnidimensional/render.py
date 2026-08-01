@@ -17,8 +17,21 @@ DIGIT_LIMIT = 4000
 
 
 def as_fraction(x):
-    """Coerce to an exact Fraction."""
+    """Coerce to an exact Fraction, binary-exact for floats."""
     return x if isinstance(x, Fraction) else Fraction(x)
+
+
+def exact(x):
+    """Coerce to a Fraction, reading floats through their decimal repr.
+
+    ``Fraction(0.1)`` is the binary value 3602879701896397/36028797018963968;
+    ``exact(0.1)`` is 1/10. Use this for anything a human typed.
+    """
+    if isinstance(x, Fraction):
+        return x
+    if isinstance(x, float):
+        return Fraction(str(x))
+    return Fraction(x)
 
 
 def _log10_int(i):
@@ -66,6 +79,22 @@ def to_decimal(x):
         return float(x)
     except (OverflowError, ValueError, ZeroDivisionError):
         return None
+
+
+def describe(x, limit=DIGIT_LIMIT):
+    """A JSON-safe description of a value that may be astronomically large.
+
+    Every API and UI surface reports numbers through this, so none of them can
+    reintroduce the float/str overflows that bounded rendering exists to stop.
+    """
+    text, truncated, digits = to_exact_str(x, limit)
+    return {
+        "text": text,
+        "truncated": truncated,
+        "digits": digits,
+        "decimal": to_decimal(x),
+        "log10": log10_abs(x),
+    }
 
 
 def to_exact_str(x, limit=DIGIT_LIMIT):
