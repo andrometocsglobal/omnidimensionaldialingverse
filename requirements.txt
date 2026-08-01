@@ -1,0 +1,4 @@
+# Streamlit Community Cloud picks up this file. The core package is stdlib-only;
+# installing "." makes `import omnidimensional` work on the deployed app.
+.
+streamlit>=1.33

@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omnidimensional"
+version = "0.1.0"
+description = "Exact, constant-time closed forms for the four progression families (AP/GP/HP/OmniFit), the generalized power mean, a harmonic midpoint, and an exact verifier."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Kumaran Kanniappan" }]
+keywords = ["mathematics", "progressions", "power-mean", "faulhaber", "closed-form", "O(1)"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = []  # core is pure standard library
+
+[project.optional-dependencies]
+app = ["streamlit>=1.33"]
+server = ["fastapi>=0.110", "uvicorn[standard]>=0.29"]
+# httpx2 is what starlette's TestClient imports; without it the API tests skip.
+dev = ["pytest>=8", "httpx2>=2.9"]
+
+[project.urls]
+Homepage = "https://github.com/OWNER/omnidimensional"
+Repository = "https://github.com/OWNER/omnidimensional"
+
+[project.scripts]
+omnidimensional = "omnidimensional.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
