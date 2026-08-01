@@ -29,8 +29,9 @@ server = ["fastapi>=0.110", "uvicorn[standard]>=0.29"]
 dev = ["pytest>=8", "httpx2>=2.9"]
 
 [project.urls]
-Homepage = "https://github.com/OWNER/omnidimensional"
-Repository = "https://github.com/OWNER/omnidimensional"
+Homepage = "https://github.com/andrometocsglobal/omnidimensionaldialingverse"
+Repository = "https://github.com/andrometocsglobal/omnidimensionaldialingverse"
+Issues = "https://github.com/andrometocsglobal/omnidimensionaldialingverse/issues"
 
 [project.scripts]
 omnidimensional = "omnidimensional.cli:main"

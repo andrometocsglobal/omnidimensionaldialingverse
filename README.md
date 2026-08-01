@@ -1,5 +1,7 @@
 # omnidimensional
 
+[![ci](https://github.com/andrometocsglobal/omnidimensionaldialingverse/actions/workflows/ci.yml/badge.svg)](https://github.com/andrometocsglobal/omnidimensionaldialingverse/actions/workflows/ci.yml)
+
 Exact, constant-time closed forms for the **four progression families** —
 arithmetic (AP), geometric (GP), harmonic (HP), and **OmniFit** — plus the
 generalized **power mean**, a harmonic **midpoint**, and an **exact verifier**.
