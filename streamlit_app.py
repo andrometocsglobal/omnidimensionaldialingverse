@@ -38,6 +38,10 @@ st.caption(
 )
 
 
+DIMENSION_NAMES = {2: "2D · square", 3: "3D · cube", 4: "4D · tesseract",
+                   5: "5D · penteract"}
+
+
 def _read_numbers(text):
     """Pull every number out of a free-form string."""
     import re
@@ -73,7 +77,14 @@ with tab_calc:
             kw["a"] = st.number_input("a", value=1.0)
             kw["d"] = st.number_input("d", value=1.0)
         else:
+            kw["a"] = st.number_input("a (starting number — k runs from a)",
+                                      value=1.0)
             kw["p"] = st.number_input("p (power)", 0, MAX_POWER, 2)
+            st.caption(
+                f"Σ kᵖ for k = {kw['a']:g} … {kw['a'] + int(n) - 1:g}"
+                + (" — Faulhaber" if kw["a"] == 1
+                   else " — midpoint/central-moment form")
+            )
 
     with c2:
         st.markdown("#### Result")
@@ -124,7 +135,11 @@ with tab_fit:
         fit_family = st.selectbox("family", ["arithmetic", "geometric", "harmonic"],
                                   key="fit_family")
         fit_n = st.number_input("N (your count)", 0, 10 ** 9, 50, step=10, key="fit_n")
-        fit_d = st.number_input("dimension d", 1, 8, 3, key="fit_d")
+        fit_d = st.radio(
+            "dimension — the shape your terms fold into",
+            options=[2, 3, 4, 5], index=1, horizontal=True, key="fit_d",
+            format_func=lambda d: DIMENSION_NAMES[d],
+        )
         fit_F = st.number_input("first term F", value=7.0, key="fit_F")
         if fit_family == "geometric":
             fit_r = st.number_input("ratio r", value=3.0, key="fit_r")
@@ -142,8 +157,14 @@ with tab_fit:
         else:
             shape = fit["shape"]
             st.markdown(
-                f"**Shape:** {fit['N']:,} real + {shape['pad']:,} pad = "
+                f"**Shape ({DIMENSION_NAMES.get(shape['dimension'], '')}):** "
+                f"{fit['N']:,} real + {shape['pad']:,} pad = "
                 f"`{shape['n']}^{shape['dimension']}` = {shape['total']:,} cells"
+            )
+            st.caption(
+                "Switching dimension changes the shape and how much padding it "
+                "needs — but not the answer, because the padding is clipped "
+                "away exactly."
             )
             clip = "÷" if fit["operation"] == "divide" else "−"
             st.code(

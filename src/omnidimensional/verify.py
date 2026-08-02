@@ -5,7 +5,8 @@ from fractions import Fraction
 from .families import Arithmetic, Geometric, Harmonic
 from .faulhaber import power_sum_closed, power_sum_brute
 from .limits import MAX_BRUTE, MAX_VERIFY_HARMONIC, geometric_brute_cap
-from .render import to_exact_str
+from .moments import ap_power_sum, ap_power_sum_brute
+from .render import exact, to_exact_str
 
 # The harmonic check compares a float approximation to an exact rational, so it
 # is the one family whose verdict is a tolerance rather than an equality.
@@ -44,8 +45,17 @@ def verify(family, n, max_brute=MAX_BRUTE, **params):
         ok = closed == brute
     elif family == "power":
         p = int(params.get("p", 2))
-        closed = power_sum_closed(n_check, p)
-        brute = power_sum_brute(n_check, p)
+        start = exact(params.get("a", 1))
+        if start == 1:
+            closed = power_sum_closed(n_check, p)
+            brute = power_sum_brute(n_check, p)
+        else:
+            # A run that does not start at 1 is the midpoint form's job;
+            # the two agree wherever they overlap.
+            closed = ap_power_sum(start, 1, n_check, p)
+            brute = ap_power_sum_brute(start, 1, n_check, p)
+            method = ("midpoint/central-moment power sum vs term-by-term sum, "
+                      "exact rational arithmetic")
         ok = closed == brute
     elif family == "harmonic":
         # HP has no elementary closed form, so comparing "the closed form" to a

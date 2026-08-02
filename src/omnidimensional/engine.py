@@ -15,13 +15,15 @@ from .hypercube import (best_dimension, coordinate, parse_shape, perfect_shape,
 from .ladder import aggregate
 from .limits import (FIT_FAMILY_NAMES, MAX_CELLS, MAX_EXACT_HARMONIC,
                      MAX_FIT_N, MAX_RESULT_DIGITS, MAX_VALUES,
-                     geometric_digits, validate)
+                     geometric_digits, non_finite, validate)
 from .moments import (ap_power_sum, gp_power_product, hp_power_sum_approx,
                       hp_power_sum_brute, run_midpoint)
 from .render import describe, exact, log10_abs, to_decimal, to_exact_str
 from .verify import verify
 
-POWER_FORM = "S_n = sum k^p via Faulhaber, O(1) in n"
+POWER_FORM = "S_n = sum_{k=1}^{n} k^p via Faulhaber, O(1) in n"
+POWER_FROM_FORM = ("S = sum_{k=a}^{a+n-1} k^p via central moments about the "
+                   "midpoint, O(1) in n")
 HARMONIC_APPROX_FORM = "(psi(a/d + n) - psi(a/d)) / d  — O(1) asymptotic"
 
 
@@ -57,7 +59,12 @@ def compute(family, n, a=1.0, d=1.0, r=2.0, p=2, cross_check=True):
             # say plainly that the answer is no longer exact.
             value, form, approximate = obj.sum_approx(n), HARMONIC_APPROX_FORM, True
     else:  # "power" — validate() already rejected anything else
-        value, form = power_sum_closed(n, p), POWER_FORM
+        start = exact(a)
+        if start == 1:
+            value, form = power_sum_closed(n, p), POWER_FORM
+        else:
+            # k runs from `a`, so this is the midpoint/central-moment form.
+            value, form = ap_power_sum(start, 1, n, p), POWER_FROM_FORM
 
     text, truncated, digits = to_exact_str(value)
     out = {
@@ -110,6 +117,9 @@ def omnifit(family, N, dimension=3, F=1, h=1, r=2, p=1, order=3):
         raise ComputeError("dimension must be between 1 and 8")
     if not 0 <= int(p) <= 64:
         raise ComputeError("power must be between 0 and 64")
+    unusable = non_finite(F=F, h=h, r=r)
+    if unusable:
+        raise ComputeError(unusable)
 
     shape = perfect_shape(N, dimension)
     if family == "geometric":
@@ -277,6 +287,9 @@ def explore(shape="2 x 2", family="arithmetic", start=7, step=1, power=3,
     power = int(power)
     if not 0 <= power <= 32:
         raise ComputeError("power must be between 0 and 32")
+    unusable = non_finite(start=start, step=step)
+    if unusable:
+        raise ComputeError(unusable)
 
     first, delta = exact(start), exact(step)
     if family == "geometric":

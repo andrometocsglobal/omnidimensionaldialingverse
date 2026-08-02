@@ -151,6 +151,35 @@ def test_compute_refuses_what_it_cannot_build():
         compute("bogus", 10)
 
 
+def test_power_series_can_start_anywhere():
+    """k runs from a, not always from 1."""
+    for start, n, p in [(1, 100, 2), (5, 10, 2), (7, 4, 3), (-3, 6, 2), (100, 50, 3)]:
+        out = compute("power", n, a=start, p=p)
+        expected = sum(Fraction(k) ** p for k in range(start, start + n))
+        assert out["result"] == str(expected), (start, n, p)
+        assert out["exact_match"] is True
+
+
+def test_power_series_default_start_is_unchanged():
+    """a = 1 must still take the Faulhaber path and give the documented value."""
+    out = compute("power", 100, p=2)
+    assert out["result"] == "338350" and "Faulhaber" in out["closed_form"]
+    moved = compute("power", 10, a=5, p=2)
+    assert "central moments" in moved["closed_form"]
+
+
+def test_verify_handles_a_shifted_power_series():
+    report = verify("power", 10, a=5, p=2)
+    assert report["exact_match"] and "midpoint" in report["method"]
+
+
+def test_non_finite_parameters_are_refused_not_crashed():
+    """JSON carries 1e400 as inf; Fraction('inf') used to blow up deep inside."""
+    for kwargs in ({"a": float("inf")}, {"d": float("nan")}, {"r": float("-inf")}):
+        with pytest.raises(ComputeError):
+            compute("arithmetic", 10, **kwargs)
+
+
 def test_compute_is_constant_time_in_n():
     """n = 10**12 must return promptly — that is the whole claim."""
     out = compute("power", 10 ** 12, p=3)

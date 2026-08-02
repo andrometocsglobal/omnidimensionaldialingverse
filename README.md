@@ -40,6 +40,7 @@ import omnidimensional as od
 
 od.Geometric(1, 2).sum(64)            # 18446744073709551615  (2**64 - 1), exact
 od.power_sum_closed(100, 2)           # Fraction(338350, 1), via Faulhaber, O(1) in n
+od.compute("power", 10, a=5, p=2)     # k from 5: 5²+…+14² = 985, O(1) in n
 od.omnidimensional_midpoint(2, 3)     # Fraction(12, 5) harmonic midpoint
 od.power_mean_spectrum([3, 5, 11, 2]) # min→harmonic→…→max
 od.verify("power", 1000, p=4)         # {'exact_match': True, ...}
@@ -66,6 +67,7 @@ CLI:
 
 ```bash
 omnidimensional sum power --n 100 --p 2
+omnidimensional sum power --n 10 --a 5 --p 2     # k from 5 -> 985
 omnidimensional verify power --n 100 --p 2
 omnidimensional midpoint 2 3 --family harmonic
 omnidimensional spectrum 3 5 11 2
@@ -117,10 +119,18 @@ file; serve `web/` anywhere and point the "API base" field at your server.
 Both front ends carry the same four surfaces, because all four are served by one
 shared engine in `omnidimensional.engine`:
 
-**Solver** (the four families) · **Omni-Fit** (fit → pad → solve → clip, with the
-padded hypercube drawn as a rotating N-D projection) · **Explorer** (dimensional
-arrangements, per-cell coordinates and contributions) · **Sequence Lab** (paste
-any numbers: ladder, classification, reverse-engineering, block assembly).
+**Solver** (the four families; the power series takes a **starting number**, so
+k runs from any `a` rather than always from 1) · **Omni-Fit** (fit → pad → solve
+→ clip, with a **2D / 3D / 4D / 5D** selector — square, cube, tesseract,
+penteract — and the padded hypercube drawn as a rotating N-D projection) ·
+**Explorer** (dimensional arrangements, per-cell coordinates and contributions) ·
+**Sequence Lab** (paste any numbers: ladder, classification, reverse-engineering,
+block assembly).
+
+Switching dimension changes the shape and how much padding it needs, but never
+the answer — for N = 50 the 2D, 3D, 4D and 5D shapes pad by 14, 14, 31 and 193
+terms respectively and all return the same exact integer. The scaffold is not
+part of the sum.
 
 ## What "exact" and "O(1)" actually mean here
 
@@ -162,7 +172,7 @@ pip install ".[app,server,dev]"
 pytest -q
 ```
 
-85 tests covering the exact math (every closed form checked against brute
+99 tests covering the exact math (every closed form checked against brute
 force), central moments, the hypercube pipeline, ladder classification,
 reverse-engineering, huge-value rendering, the REST + WebSocket API, and the
 Streamlit app itself — executed via `streamlit.testing.v1.AppTest`, not merely

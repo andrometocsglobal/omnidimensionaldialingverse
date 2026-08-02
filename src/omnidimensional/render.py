@@ -30,6 +30,10 @@ def exact(x):
     if isinstance(x, Fraction):
         return x
     if isinstance(x, float):
+        if not math.isfinite(x):
+            # Fraction("inf") raises a bare ValueError deep in the call stack;
+            # say what actually went wrong instead.
+            raise ValueError("expected a finite number, got %r" % x)
         return Fraction(str(x))
     return Fraction(x)
 

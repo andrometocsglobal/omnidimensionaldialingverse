@@ -52,6 +52,23 @@ def test_compute_survives_a_result_too_long_to_stringify(client):
     assert body["exact_match"]
 
 
+def test_compute_accepts_a_power_series_starting_number(client):
+    body = client.post("/api/compute", json={
+        "family": "power", "n": 10, "a": 5, "p": 2}).json()
+    assert body["result"] == str(sum(k * k for k in range(5, 15)))
+    assert body["exact_match"] is True
+
+
+@pytest.mark.parametrize("dimension", [2, 3, 4, 5])
+def test_omnifit_endpoint_serves_every_dimension(client, dimension):
+    body = client.post("/api/omnifit", json={
+        "family": "arithmetic", "N": 50, "dimension": dimension,
+        "F": 7, "h": 2, "p": 3}).json()
+    assert body["shape"]["dimension"] == dimension
+    assert body["exact_match"] is True
+    assert body["answer"]["text"] == "15778000"      # same answer, every shape
+
+
 def test_compute_rejects_bad_input_with_422_not_500(client):
     assert client.post("/api/compute", json={"family": "bogus", "n": 10}).status_code == 422
     assert client.post("/api/compute", json={"family": "arithmetic", "n": -5}).status_code == 422

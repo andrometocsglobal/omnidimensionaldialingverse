@@ -63,6 +63,13 @@
   .btn.ghost:hover{border-color:var(--cyan);color:var(--ink)}
   .row{display:flex;gap:9px;flex-wrap:wrap}
   .row>*{flex:1;min-width:88px}
+  .dims{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:5px}
+  .dimb{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 4px;
+    cursor:pointer;color:var(--sub);font-weight:800;font-size:13.5px;text-align:center;transition:.15s;
+    font-family:inherit;line-height:1.15}
+  .dimb:hover{border-color:var(--cyan);color:var(--ink)}
+  .dimb.on{color:#0d1330;background:var(--gold);border-color:var(--gold)}
+  .dimb small{display:block;font-size:9px;font-weight:600;opacity:.78;margin-top:3px;letter-spacing:.02em}
 
   .answer{font-size:clamp(1.5rem,3.4vw,2.5rem);line-height:1.1;color:var(--gold);
     letter-spacing:-.03em;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
@@ -274,8 +281,12 @@ function Solver({base, clientId}) {
           <label>r (ratio)</label>
           <input type="number" value={r} onChange={e => setR(e.target.value)} /></>}
         {family === "power" && <>
+          <label>a (starting number — k runs from a)</label>
+          <input type="number" value={a} onChange={e => setA(e.target.value)} />
           <label>p (power)</label>
-          <input type="number" value={p} onChange={e => setP(e.target.value)} /></>}
+          <input type="number" value={p} onChange={e => setP(e.target.value)} />
+          <div className="note">Σ kᵖ for k = {a} … {Number(a) + Number(n) - 1}
+            {Number(a) === 1 ? " — Faulhaber" : " — midpoint/central-moment form"}</div></>}
         <button className="btn" onClick={run} disabled={busy}>
           {busy ? "computing…" : "Compute (O(1))"}</button>
         <Err>{err}</Err>
@@ -305,6 +316,18 @@ function Solver({base, clientId}) {
 }
 
 /* ------------------------------------------------------------- Omni-Fit ---- */
+/* The projection handles any D; these are the shapes worth naming. */
+const DIMENSIONS = [
+  {d: 2, label: "2D", name: "square"},
+  {d: 3, label: "3D", name: "cube"},
+  {d: 4, label: "4D", name: "tesseract"},
+  {d: 5, label: "5D", name: "penteract"},
+];
+const geometryOf = d => {
+  const found = DIMENSIONS.find(item => item.d === Number(d));
+  return found ? found.name : d + "-cube";
+};
+
 function OmniFit({base, clientId}) {
   const [family, setFamily] = useState("arithmetic");
   const [N, setN] = useState(50), [dimension, setDim] = useState(3);
@@ -320,7 +343,12 @@ function OmniFit({base, clientId}) {
     } catch (e) { setErr(e.message); setRes(null); }
     finally { setBusy(false); }
   }, [base, family, N, dimension, F, h, r, p, clientId]);
-  useEffect(() => { run().catch(() => {}); }, []);
+
+  // Dimension and family are discrete choices, so recompute the moment they
+  // change — a selector that needs a second click to take effect reads broken.
+  // The numeric fields stay on the button: every solve broadcasts to the sync
+  // feed, and typing "50" should not push three updates to every other tab.
+  useEffect(() => { run().catch(() => {}); }, [dimension, family]);
 
   const shape = res ? res.shape : null;
   const clip = res && res.operation === "divide" ? "÷" : "−";
@@ -337,8 +365,15 @@ function OmniFit({base, clientId}) {
         </select>
         <label>N (your count)</label>
         <input type="number" value={N} onChange={e => setN(e.target.value)} />
-        <label>dimension d</label>
-        <input type="number" min="1" max="8" value={dimension} onChange={e => setDim(e.target.value)} />
+        <label>dimension — the shape your terms fold into</label>
+        <div className="dims">
+          {DIMENSIONS.map(item => (
+            <button key={item.d} type="button"
+              className={"dimb" + (Number(dimension) === item.d ? " on" : "")}
+              onClick={() => setDim(item.d)}>
+              {item.label}<small>{item.name}</small>
+            </button>))}
+        </div>
         <div className="row">
           <div><label>first term F</label>
             <input type="number" value={F} onChange={e => setF(e.target.value)} /></div>
@@ -360,13 +395,16 @@ function OmniFit({base, clientId}) {
 
       <div className="stack">
         {shape && <div className="card">
-          <div className="kicker"><span>02 / the perfect shape</span>
+          <div className="kicker"><span>02 / the perfect shape · {shape.dimension}D {geometryOf(shape.dimension)}</span>
             <span className="mono m">{fmt(res.N)} real + {fmt(shape.pad)} pad = {shape.n}^{shape.dimension} = {fmt(shape.total)}</span></div>
-          <Hypercube n={shape.n} dimension={shape.dimension} real={res.N} height={240} />
+          <Hypercube n={shape.n} dimension={shape.dimension} real={res.N} height={250} />
           <div className="legend">
             <span><span className="dot" style={{background:"#ffc857",display:"inline-block",marginRight:6}}></span>your terms (N = {fmt(res.N)})</span>
             <span><span className="dot" style={{background:"#38446f",display:"inline-block",marginRight:6}}></span>synthetic padding (clipped away)</span>
           </div>
+          <div className="note">A {shape.dimension}D {geometryOf(shape.dimension)} of side {shape.n},
+            projected down to the screen. Switching dimension changes the shape and how much padding
+            it needs — but not the answer, because the padding is clipped away exactly.</div>
         </div>}
 
         {res && <div className="card">
@@ -403,7 +441,12 @@ function OmniFit({base, clientId}) {
 }
 
 /* ------------------------------------------------------------- Explorer ---- */
-const PRESETS = ["2 x 2", "3 x 3", "2 x 3 x 2", "2 x 2 x 2 x 2"];
+const PRESETS = [
+  {label: "2D", shape: "3 x 3"},
+  {label: "3D", shape: "2 x 3 x 2"},
+  {label: "4D", shape: "2 x 2 x 2 x 2"},
+  {label: "5D", shape: "2 x 2 x 2 x 2 x 2"},
+];
 
 function Explorer({base}) {
   const [shape, setShape] = useState("2 x 3 x 2");
@@ -432,11 +475,15 @@ function Explorer({base}) {
         </select>
         <label>Dimensional arrangement</label>
         <input type="text" value={shape} onChange={e => setShape(e.target.value)} />
-        <div className="row" style={{marginTop:9}}>
+        <div className="dims">
           {PRESETS.map(preset => (
-            <button key={preset} className="btn ghost" style={{marginTop:0,padding:"7px 4px",fontSize:12}}
-              onClick={() => setShape(preset)}>{preset}</button>))}
+            <button key={preset.label} type="button"
+              className={"dimb" + (shape.replace(/\s/g, "") === preset.shape.replace(/\s/g, "") ? " on" : "")}
+              onClick={() => setShape(preset.shape)}>
+              {preset.label}<small>{preset.shape.replace(/ /g, "")}</small>
+            </button>))}
         </div>
+        <div className="note">Any arrangement works — these are the 2D–5D defaults.</div>
         <div className="row">
           <div><label>start</label>
             <input type="number" value={start} onChange={e => setStart(e.target.value)} /></div>

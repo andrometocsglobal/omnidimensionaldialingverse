@@ -51,6 +51,22 @@ def geometric_brute_cap(a, r, max_digits=MAX_VERIFY_DIGITS):
     return max(1, min(MAX_BRUTE, int(max_digits / abs(math.log10(abs_r)))))
 
 
+def non_finite(**values):
+    """Name the first non-finite parameter, or None when all are usable.
+
+    JSON happily carries 1e400, which arrives as float('inf') and detonates
+    somewhere deep in Fraction. Catch it at the front door instead.
+    """
+    for name, value in values.items():
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return "%s must be a number" % name
+        if not math.isfinite(number):
+            return "%s must be finite (got %r)" % (name, number)
+    return None
+
+
 def validate(family, n, a=1.0, d=1.0, r=2.0, p=2):
     """Return None if the request is answerable, else a human-readable reason."""
     if family not in FAMILY_NAMES:
@@ -64,6 +80,10 @@ def validate(family, n, a=1.0, d=1.0, r=2.0, p=2):
         return "n must be >= 0"
     if n > MAX_N:
         return "n must be <= %d" % MAX_N
+
+    unusable = non_finite(a=a, d=d, r=r)
+    if unusable:
+        return unusable
 
     if family == "power":
         p = int(p)

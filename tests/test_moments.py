@@ -165,6 +165,25 @@ def test_omnifit_is_constant_time_for_an_enormous_count():
     assert out["answer"]["digits"] == 27
 
 
+@pytest.mark.parametrize("dimension", [2, 3, 4, 5])
+def test_the_answer_is_invariant_across_dimensions(dimension):
+    """2D, 3D, 4D and 5D pad by different amounts and still agree exactly.
+
+    That is the point of the clip: the shape is scaffolding, not part of the sum.
+    """
+    fitted = omnifit("arithmetic", 50, dimension, F=7, h=2, p=3)
+    assert fitted["shape"]["dimension"] == dimension
+    assert fitted["shape"]["total"] == fitted["shape"]["n"] ** dimension
+    assert fitted["exact_match"] is True
+    assert fitted["answer"]["text"] == str(ap_power_sum_brute(7, 2, 50, 3))
+
+
+def test_dimensions_really_do_differ_in_padding():
+    pads = {d: omnifit("arithmetic", 50, d, F=7, h=2, p=3)["shape"]["pad"]
+            for d in (2, 3, 4, 5)}
+    assert pads[4] != pads[3] and pads[5] > pads[2]   # not all the same scaffold
+
+
 def test_omnifit_refuses_a_shape_it_cannot_build():
     with pytest.raises(ComputeError):
         omnifit("geometric", 10 ** 7, 6, F=1, r=2, p=1)
